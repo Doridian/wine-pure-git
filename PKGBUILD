@@ -6,7 +6,7 @@
 # Contributor: Giovanni Scafora <giovanni@archlinux.org>
 
 pkgname=wine-pure-git
-pkgver=10.3.r0.g3364df08cb6
+pkgver=10.3.r34.g10bb431e0d0
 pkgrel=1
 source=(
   "git+https://gitlab.winehq.org/wine/wine.git"
@@ -24,6 +24,7 @@ source=(
   0005-wineboot-Load-root-certificates-on-prefix-update.patch
   Avoid-winemenubuilder-to-startup-explorer.exe.patch
   include-use-ntsync.h-v7-module-header-as-an-in-tree-header.patch
+  kernelbase-Fix-uninitialized-structs-in-OpenThread.patch
 )
 sha512sums=(
   'SKIP'
@@ -41,6 +42,7 @@ sha512sums=(
   '6e5e372f8d9bc26a22b5d56be4d17e7a6c8e4dbdc310145a23c182eaf3c22ba733fecaf73f1e9a92d3297d61f49652d09f112623bdfc81421cb741a52964d836'
   '3d621035add00dc8b5801956a7e76b4348ee2ab34c2f383e644acb88307087d339c2932e41c1053fb1128cb63efe69407953c867fe68b13b988687491711f99b'
   'ad7644691ccba09220b3b0f140f635eb786ce330b92cfb03f9a2229de410d8de5e87087295b7896148d2d8f62e15e17bc9da87f7ade6883acd59e3d19a48abc7'
+  '790e4e4de462b99893b79f8ba110cd5298a8ab13579796a7a058ce1f01124568e8953a8403b46ee4218dd1589813303500697e23777aff887e37a3cff636b8cc'
 )
 
 pkgdesc="Bleeding-edge Wine build (Staging, WoW64, NTSync, Wayland)"
@@ -139,6 +141,10 @@ prepare() {
   # Fixes "The explorer process failed to start" issue
   patch -Np1 -i "${srcdir}/Avoid-winemenubuilder-to-startup-explorer.exe.patch"
 
+  # Fixes struct alignment inside kernelbase.OpenThread()
+  # Fixes: Hogwarts Legacy
+  patch -Np1 -i "${srcdir}/kernelbase-Fix-uninitialized-structs-in-OpenThread.patch"
+
   ./dlls/winevulkan/make_vulkan
   ./tools/make_requests
   ./tools/make_specfiles
@@ -154,7 +160,7 @@ build() {
 
   # Apply flags for cross-compilation (from Proton)
   export CFLAGS="-O3 -march=$march -mtune=$mtune -mfpmath=sse -fwrapv -fno-strict-aliasing -pipe"
-  export CROSSCFLAGS="$CFLAGS -Wa,-muse-unaligned-vector-move"
+  export CROSSCFLAGS="$CFLAGS"
   export CROSSCXXFLAGS="$CROSSCFLAGS"
   export CROSSLDFLAGS="-Wl,-O1"
   export LDFLAGS="-Wl,-O1,--sort-common,--as-needed"
